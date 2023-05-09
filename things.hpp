@@ -25,3 +25,4 @@ struct Image {
 void update();
 void init();
 void key_event(GLFWwindow* window, int key, int scancode, int action, int mods);
+void handle_keys();

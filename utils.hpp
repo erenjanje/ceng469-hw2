@@ -7,6 +7,10 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
+#include <array>
+
+#warning "Delete execinfo in production"
+#include <execinfo.h>
 
 static std::unordered_map<GLenum, const std::string> error_names = {
     {GL_INVALID_ENUM, "invalid enum"},
@@ -20,8 +24,13 @@ static std::unordered_map<GLenum, const std::string> error_names = {
 
 static void check_gl(const std::string context) {
     int status = glGetError();
-    if(status != GL_NO_ERROR)
+    if(status != GL_NO_ERROR) {
+        std::array<void*, 10> array;
+        std::size_t size = backtrace(array.data(), 10);
+        std::cerr << "Backtrace:\n";
+        backtrace_symbols_fd(array.data(), size, 2);
         throw std::runtime_error(context + " Error: " + error_names[status]);
+    }
 }
 
 #define LOG(val) std::cout << "(" << __FILE__ << ":" << __LINE__ << ")[" << (#val) << "]" << ": " << (val) << "\n"

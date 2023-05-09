@@ -5,6 +5,7 @@
 #include "glad/glad.h"
 #include <glm/ext.hpp>
 #include <exception>
+#include <vector>
 
 class ShaderProgram {
     unsigned vertex_shader;
@@ -23,6 +24,7 @@ public:
     void set(const std::string& name, const glm::mat4 m);
     void set(const std::string& name, const glm::vec3 v);
     void set(const std::string& name, const GLuint i);
+    void set(const std::string& name, const std::vector<GLuint>& v);
 };
 
 

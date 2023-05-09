@@ -30,8 +30,8 @@ static void glfw_key_cb(GLFWwindow* window, int key, int scancode, int action, i
     }
 }
 
-const int width = 800;
-const int height = 800;
+extern const int width = 800;
+extern const int height = 800;
 #include <algorithm>
 
 int main() {

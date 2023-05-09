@@ -103,3 +103,7 @@ void ShaderProgram::set(const std::string& name, const glm::vec3 v) {
 void ShaderProgram::set(const std::string& name, const GLuint i) {
     glUniform1i(new_location(name), i);
 }
+
+void ShaderProgram::set(const std::string& name, const std::vector<GLuint>& v) {
+    glUniform1iv(new_location(name), v.size(), (const GLint*)v.data());
+}
