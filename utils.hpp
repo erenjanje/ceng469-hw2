@@ -33,6 +33,8 @@ static void check_gl(const std::string context) {
     }
 }
 
+#define check_gl(ctx) check_gl("(" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + ") " + ctx)
+
 #define LOG(val) std::cout << "(" << __FILE__ << ":" << __LINE__ << ")[" << (#val) << "]" << ": " << (val) << "\n"
 
 template<typename T>

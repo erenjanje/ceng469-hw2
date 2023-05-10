@@ -12,10 +12,10 @@ uniform vec3 lightintensity;
 uniform vec3 eyepos;
 
 out vec3 vertex_position;
-flat out vec3 vertex_normal;
+out vec3 vertex_normal;
 
 void main() {
-    vertex_normal = normal;
+    vertex_normal = (inverse(model) * vec4(normal, 0.0f)).xyz;
     vertex_position = (model * vec4(pos, 1)).xyz;
     gl_Position = projection * view * vec4(vertex_position, 1.0f);
 }

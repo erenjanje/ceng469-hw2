@@ -53,6 +53,26 @@ static const auto vehicle_vertices = std::vector<float>{
      1.0f, -1.0f,  1.0f, // 5
      1.0f,  1.0f,  1.0f, // 6
     -1.0f,  1.0f,  1.0f, // 7
+    -1.0f, -1.0f, -1.0f, // 8
+     1.0f, -1.0f, -1.0f, // 9
+     1.0f,  1.0f, -1.0f, // 10
+    -1.0f,  1.0f, -1.0f, // 11
+    -1.0f, -1.0f,  1.0f, // 12
+     1.0f, -1.0f,  1.0f, // 13
+     1.0f,  1.0f,  1.0f, // 14
+    -1.0f,  1.0f,  1.0f, // 15
+    -1.0f, -1.0f, -1.0f, // 16
+     1.0f, -1.0f, -1.0f, // 17
+     1.0f,  1.0f, -1.0f, // 18
+    -1.0f,  1.0f, -1.0f, // 19
+    -1.0f, -1.0f,  1.0f, // 20
+     1.0f, -1.0f,  1.0f, // 21
+     1.0f,  1.0f,  1.0f, // 22
+    -1.0f,  1.0f,  1.0f, // 23
+};
+
+static const auto vehicle_normals = std::vector<float>{
+
 };
 
 static const auto vehicle_indices = std::vector<GLuint>{
@@ -96,6 +116,8 @@ static const auto car1_indices = std::vector<GLuint>{
     4, 0, 1,
 };
 
+bool car_creating = false;
+
 static const auto car2_vertices = std::vector<float>{
     -0.5f, -0.5f, -2.0f,
      0.5f, -0.5f, -2.0f,
@@ -125,10 +147,12 @@ static const auto car2_indices = std::vector<GLuint>{
 struct CarObject {
     Object body;
     Object windows;
+    Object tires;
     
     void draw(ShaderProgram& shader, const std::vector<Light>& lights, const Camera& camera) {
         body.draw(shader, lights, camera);
         windows.draw(shader, lights, camera);
+        tires.draw(shader, lights, camera);
     }
 };
 
@@ -165,15 +189,20 @@ void init() {
     programs.car = ShaderProgram::from_files("./shaders/car_vertex.glsl", "./shaders/car_fragment.glsl");
     
     objects.ground = Object::with_texture(bottom_floor, bottom_indices, bottom_textures);
-    objects.vehicle = Object(vehicle_vertices, vehicle_indices, glm::vec3{0.0f, 0.0f, -5.0f});
-    objects.armadillo = Object::from_file("./assets/armadillo.obj").translate(glm::vec3{0.0f, 0.0f, -10.0f}).rotate(glm::vec3{0.0f, 180.0f, 0.0f});
-    objects.car.body = Object(car1_vertices, car1_indices);
-    objects.car.windows = Object(car2_vertices, car2_indices);
+    objects.vehicle = Object(vehicle_vertices, vehicle_normals, vehicle_indices, glm::vec3{0.0f, 0.0f, -5.0f});
+    objects.armadillo = Object::from_file("./assets/armadillo.obj").translate(glm::vec3{0.0f, 0.0f, -5.0f}).rotate(glm::vec3{0.0f, 180.0f, 0.0f});
     
-    objects.car.body.get_translation() = glm::vec3{0.0f, 3.0f, -7.0f};
-    objects.car.windows.get_translation() = glm::vec3{0.0f, 3.0f, -7.0f};
+    objects.car.body = Object::from_file("./assets/cybertruck_body.obj");
+    objects.car.windows = Object::from_file("./assets/cybertruck_windows.obj");
+    objects.car.tires = Object::from_file("./assets/cybertruck_tires.obj");
+    
+    // objects.car.body.get_translation() = glm::vec3{0.0f, 1.0f, -10.0f};
+    // objects.car.windows.get_translation() = glm::vec3{0.0f, 1.0f, -10.0f};
+    // objects.car.tires.get_translation() = glm::vec3{0.0f, 1.0f, -10.0f};
+
     objects.car.body.get_scale() = glm::vec3{0.2f, 0.2f, 0.2f};
     objects.car.windows.get_scale() = glm::vec3{0.2f, 0.2f, 0.2f};
+    objects.car.tires.get_scale() = glm::vec3{0.2f, 0.2f, 0.2f};
     
     ground_texture = Texture("./ground.png");
     cubemap = Cubemap(std::vector<std::string>{
@@ -186,7 +215,7 @@ void init() {
     });
     
     for(auto& fb : framebuffers) {
-        fb = Framebuffer(1024, 1024);
+        fb = Framebuffer(width, height);
         framebuffer_samplers.push_back(fb.get_sampler());
     }
 }
@@ -209,28 +238,62 @@ void draw_nocar() {
     objects.ground.draw(programs.ground, lights, camera);
 }
 
+static const std::array<glm::vec3, 6> camera_directions = {
+    glm::vec3{ 1.0f,  0.0f,  0.0f},
+    glm::vec3{-1.0f,  0.0f,  0.0f},
+    glm::vec3{ 0.0f,  1.0f,  0.0f},
+    glm::vec3{ 0.0f, -1.0f,  0.0f},
+    glm::vec3{ 0.0f,  0.0f,  1.0f},
+    glm::vec3{ 0.0f,  0.0f, -1.0f},
+};
+
+static const std::array<glm::vec3, 6> camera_ups = {
+    glm::vec3{0.0f, 1.0f, 0.0f},
+    glm::vec3{0.0f, 1.0f, 0.0f},
+    glm::vec3{0.0f, 0.0f, 1.0f},
+    glm::vec3{0.0f, 0.0f, 1.0f},
+    glm::vec3{0.0f, 1.0f, 0.0f},
+    glm::vec3{0.0f, 1.0f, 0.0f},
+};
+
+static GLuint render_type = 0;
+
 void update() {
     handle_keys();
     
+    Camera camera_backup = camera;
+    camera.fov = 45.0f;
+    camera.aspect_ratio = 1.0f;
     for(int i = 0; i < 6; i++) {
         framebuffers[i].bind();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glDepthMask(true);
         glEnable(GL_DEPTH_TEST);
+
+        camera.position = objects.car.body.get_translation();
+        camera.direction = camera_directions[i];
+        camera.up = camera_ups[i];
+
         draw_nocar();
+        glTextureBarrier();
         framebuffers[i].unbind();
     }
+    camera = camera_backup;
     glViewport(0, 0, width, height);
     
     draw_nocar();
     
     programs.car.use();
-    programs.car.set("environment", (GLuint)0);
-    glActiveTexture(GL_TEXTURE0 + 0);
-    glBindTexture(GL_TEXTURE_2D, framebuffers[0].get_texture());
-    LOG(framebuffers[0].get_texture());
-    glBindSampler(0, framebuffers[0].get_sampler());
+    programs.car.set("environment", std::vector<GLuint>{1,2,3,4,5,6});
+    programs.car.set("eyepos", camera.position);
+    programs.car.set("render_type", render_type);
+
+    for(int i = 0; i < 6; i++) {
+        glActiveTexture(GL_TEXTURE0 + 1+i);
+        glBindTexture(GL_TEXTURE_2D, framebuffers[i].get_texture());
+        glBindSampler(i+1, framebuffers[i].get_sampler());
+    }
     objects.car.draw(programs.car, lights, camera);
 }
 
@@ -286,6 +349,13 @@ void handle_keys() {
 void key_event(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if(key == GLFW_KEY_ESCAPE and action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+        return;
+    } else if(key == GLFW_KEY_Q and action == GLFW_PRESS) {
+        render_type = (render_type + 1) % 2;
+        return;
+    }
+    if(key == GLFW_KEY_Q) {
+        return;
     }
     if(action == GLFW_PRESS) {
         pressed_keys.insert(key);

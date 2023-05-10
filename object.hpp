@@ -15,7 +15,7 @@ class Object {
     glm::vec3 scaling = glm::vec3{1.0f, 1.0f, 1.0f};
 public:
     Object();
-    Object(const std::vector<float>& vertices, const std::vector<GLuint>& indices,
+    Object(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<GLuint>& indices,
         glm::vec3 translation = glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3 rotation = glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3 scale = glm::vec3{0.0f, 0.0f, 0.0f});
     static Object with_texture(const std::vector<float>& vertices, const std::vector<GLuint>& indices, const std::vector<float>& texture_coordinates);
     static Object from_file(const std::string filename);

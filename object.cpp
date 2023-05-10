@@ -12,26 +12,11 @@ Object::Object() {
     index_count = 0;
 }
 
-Object::Object(const std::vector<float>& vertices, const std::vector<GLuint>& indices,
+extern bool car_creating;
+
+Object::Object(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<GLuint>& indices,
     glm::vec3 translation, glm::vec3 rotation, glm::vec3 ratios
 ) {
-    std::vector<float> normals;
-    normals.reserve(indices.size());
-    
-    for(std::size_t i = 0; i < indices.size()/3; i++) {
-        const auto v1 = glm::vec3{vertices[3*indices[i]], vertices[3*indices[i] + 1], vertices[3*indices[i] + 2]};
-        const auto v2 = glm::vec3{vertices[3*indices[i+1]], vertices[3*indices[i+2] + 1], vertices[3*indices[i+1] + 2]};
-        const auto v3 = glm::vec3{vertices[3*indices[i+2]], vertices[3*indices[i+2] + 1], vertices[3*indices[i+2] + 2]};
-        
-        const auto e1 = v2 - v1;
-        const auto e2 = v3 - v1;
-        
-        const auto n = glm::normalize(glm::cross(e1, e2));
-        normals.push_back(n.x);
-        normals.push_back(n.y);
-        normals.push_back(n.z);
-    }
-    
     const auto vertex_size = vertices.size()*sizeof(float);
     const auto normal_size = normals.size()*sizeof(float);
     const auto index_size = indices.size()*sizeof(float);
@@ -71,9 +56,9 @@ Object Object::with_texture(const std::vector<float>& vertices, const std::vecto
     normals.reserve(indices.size());
     
     for(std::size_t i = 0; i < indices.size()/3; i++) {
-        const auto v1 = glm::vec3{vertices[3*indices[i]], vertices[3*indices[i] + 1], vertices[3*indices[i] + 2]};
-        const auto v2 = glm::vec3{vertices[3*indices[i+1]], vertices[3*indices[i+2] + 1], vertices[3*indices[i+1] + 2]};
-        const auto v3 = glm::vec3{vertices[3*indices[i+2]], vertices[3*indices[i+2] + 1], vertices[3*indices[i+2] + 2]};
+        const auto v1 = glm::vec3{vertices[3*indices[3*i    ]], vertices[3*indices[3*i    ] + 1], vertices[3*indices[3*i    ] + 2]};
+        const auto v2 = glm::vec3{vertices[3*indices[3*i + 1]], vertices[3*indices[3*i + 1] + 1], vertices[3*indices[3*i + 1] + 2]};
+        const auto v3 = glm::vec3{vertices[3*indices[3*i + 2]], vertices[3*indices[3*i + 2] + 1], vertices[3*indices[3*i + 2] + 2]};
         
         const auto e1 = v2 - v1;
         const auto e2 = v3 - v1;
@@ -157,7 +142,7 @@ Object Object::from_file(const std::string filename) {
             indices.push_back(vertex_index[2]);
         }
     }
-    return std::move(Object(vertices, indices));
+    return std::move(Object(vertices, normals, indices));
 }
 
 void Object::draw(ShaderProgram& program, const std::vector<Light>& lights, const Camera& camera) {
