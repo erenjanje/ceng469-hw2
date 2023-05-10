@@ -76,6 +76,6 @@ void main() {
     } else if(part == 1) {
         frag_color += vec4(0.0f, 0.0f, 0.2f, 0.0f);
     } else {
-        frag_color = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+        frag_color = vec4(0.05f, 0.05f, 0.05f, 1.0f);
     }
 }

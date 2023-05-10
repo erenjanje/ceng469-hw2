@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <iostream>
 #include <cstdlib>
+#include <array>
+#include <string>
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>

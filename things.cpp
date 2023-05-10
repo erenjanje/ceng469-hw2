@@ -179,6 +179,22 @@ const std::vector<Light> lights = {
 
 static Camera camera;
 
+static const auto car_camera_offsets = std::array<glm::vec3, 4>{
+    glm::vec3{ 0.0f, 1.0f, -3.0f}, // front
+    glm::vec3{ 0.0f, 1.0f,  3.0f}, // back
+    glm::vec3{ 3.0f, 1.0f,  0.0f}, // right
+    glm::vec3{-3.0f, 1.0f,  0.0f}, // left
+};
+
+static const auto car_camera_directions = std::array<glm::vec3, 4>{
+    glm::vec3{ 0.0f, 0.0f,  1.0f},
+    glm::vec3{ 0.0f, 0.0f, -1.0f},
+    glm::vec3{-1.0f, 0.0f,  0.0f},
+    glm::vec3{ 1.0f, 0.0f,  0.0f},
+};
+
+static int car_camera = 0;
+
 static Image ground_image;
 static Texture ground_texture;
 static Cubemap cubemap;
@@ -261,8 +277,22 @@ static const std::array<glm::vec3, 6> camera_ups = {
 
 static GLuint render_type = 0;
 
+static auto car_direction = 180.0f;
+static auto car_speed = 0.0f;
+
+#define CAR_SPEED_MULTIPLIER (0.01f)
+
 void update() {
     handle_keys();
+    const auto car_direction_matrix = glm::rotate(glm::mat4(1.0f), glm::radians(car_direction), glm::vec3{0.0f, 1.0f, 0.0f});
+    const auto car_direction_vector = glm::vec3(car_direction_matrix * glm::vec4{0.0f, 0.0f, 1.0f, 0.0f});
+    objects.car.body.get_translation() += car_speed * car_direction_vector * CAR_SPEED_MULTIPLIER;
+    objects.car.tires.get_translation() += car_speed * car_direction_vector * CAR_SPEED_MULTIPLIER;
+    objects.car.windows.get_translation() += car_speed * car_direction_vector * CAR_SPEED_MULTIPLIER;
+    
+    objects.car.body.get_rotation().y = car_direction;
+    objects.car.tires.get_rotation().y = car_direction;
+    objects.car.windows.get_rotation().y = car_direction;
     
     Camera camera_backup = camera;
     camera.fov = 45.0f;
@@ -282,11 +312,21 @@ void update() {
         glTextureBarrier();
         framebuffers[i].unbind();
     }
-    camera = camera_backup;
-    glViewport(0, 0, width, height);
     
+    auto camera_direction = car_camera_directions[car_camera];
+    camera_direction = glm::vec3(car_direction_matrix * glm::vec4(camera_direction, 0.0f));
+    camera.direction = camera_direction;
+    
+    auto camera_position = car_camera_offsets[car_camera];
+    camera_position = glm::vec3(car_direction_matrix * glm::vec4(camera_position, 1.0f));
+    camera_position = camera_position + objects.car.body.get_translation()*objects.car.body.get_scale();
+    camera.position = camera_position;
+    
+    glViewport(0, 0, width, height);
+    glEnable(GL_DEPTH_TEST);
     draw_nocar();
     
+    glEnable(GL_DEPTH_TEST);
     programs.car.use();
     programs.car.set("environment", std::vector<GLuint>{1,2,3,4,5,6});
     programs.car.set("eyepos", camera.position);
@@ -315,37 +355,37 @@ void handle_key(const int key) {
     const auto right = glm::normalize(glm::cross(camera.horizontal_direction, camera.up));
     
     if(key == GLFW_KEY_A) {
-        camera.position -= right * SPEED;
+        car_direction += ROTATION_SPEED;
     }
     if(key == GLFW_KEY_W) {
-        camera.position += camera.horizontal_direction * SPEED;
+        car_speed += SPEED;
     }
     if(key == GLFW_KEY_D) {
-        camera.position += right * SPEED;
+        car_direction -= ROTATION_SPEED;
     }
     if(key == GLFW_KEY_S) {
-        camera.position -= camera.horizontal_direction * SPEED;
+        car_speed -= SPEED;
     }
     if(key == GLFW_KEY_SPACE) {
-        camera.position += glm::vec3{0.0f, SPEED, 0.0f};
+        // camera.position += glm::vec3{0.0f, SPEED, 0.0f};
     }
     if(key == GLFW_KEY_LEFT_SHIFT) {
-        camera.position += glm::vec3{0.0f, -SPEED, 0.0f};
+        // camera.position += glm::vec3{0.0f, -SPEED, 0.0f};
     }
     if(key == GLFW_KEY_LEFT) {
-        camera.horizontal_direction = glm::rotate(glm::mat4(1.0f), glm::radians(ROTATION_SPEED), glm::vec3{0.0f, 1.0f, 0.0f}) * glm::vec4(camera.horizontal_direction, 0.0f);
+        // camera.horizontal_direction = glm::rotate(glm::mat4(1.0f), glm::radians(ROTATION_SPEED), glm::vec3{0.0f, 1.0f, 0.0f}) * glm::vec4(camera.horizontal_direction, 0.0f);
     }
     if(key == GLFW_KEY_RIGHT) {
-        camera.horizontal_direction = glm::rotate(glm::mat4(1.0f), glm::radians(-ROTATION_SPEED), glm::vec3{0.0f, 1.0f, 0.0f}) * glm::vec4(camera.horizontal_direction, 0.0f);
+        // camera.horizontal_direction = glm::rotate(glm::mat4(1.0f), glm::radians(-ROTATION_SPEED), glm::vec3{0.0f, 1.0f, 0.0f}) * glm::vec4(camera.horizontal_direction, 0.0f);
     }
     if(key == GLFW_KEY_UP) {
-        camera.t = std::min(std::max(camera.t - T_SPEED, 0.0f), 1.0f);
+        // camera.t = std::min(std::max(camera.t - T_SPEED, 0.0f), 1.0f);
     }
     if(key == GLFW_KEY_DOWN) {
-        camera.t = std::max(std::min(camera.t + T_SPEED, 1.0f), 0.0f);
+        // camera.t = std::max(std::min(camera.t + T_SPEED, 1.0f), 0.0f);
     }
     
-    camera.direction = glm::mix(glm::quat{0.0f, glm::normalize(camera.horizontal_direction + glm::vec3{0.0f, 1.0f, 0.0f})}, glm::quat{0.0f, glm::normalize(camera.horizontal_direction + glm::vec3{0.0f, -1.0f, 0.0f})}, camera.t) * camera.horizontal_direction;
+    // camera.direction = glm::mix(glm::quat{0.0f, glm::normalize(camera.horizontal_direction + glm::vec3{0.0f, 1.0f, 0.0f})}, glm::quat{0.0f, glm::normalize(camera.horizontal_direction + glm::vec3{0.0f, -1.0f, 0.0f})}, camera.t) * camera.horizontal_direction;
 }
 
 void handle_keys() {
@@ -359,8 +399,19 @@ void key_event(GLFWwindow* window, int key, int scancode, int action, int mods) 
         glfwSetWindowShouldClose(window, true);
         return;
     } else if(key == GLFW_KEY_Q and action == GLFW_PRESS) {
-        render_type = (render_type + 1) % 2;
+        car_camera = 3;
         return;
+    } else if(key == GLFW_KEY_E and action == GLFW_PRESS) {
+        car_camera = 2;
+        return;
+    } else if(key == GLFW_KEY_R and action == GLFW_PRESS) {
+        car_camera = 0;
+        return;
+    } else if(key == GLFW_KEY_T and action == GLFW_PRESS) {
+        car_camera = 1;
+        return;
+    } else if(key == GLFW_KEY_SPACE and action == GLFW_PRESS) {
+        car_speed = 0.0f;
     }
     if(key == GLFW_KEY_Q) {
         return;
@@ -368,7 +419,10 @@ void key_event(GLFWwindow* window, int key, int scancode, int action, int mods) 
     if(action == GLFW_PRESS) {
         pressed_keys.insert(key);
     } else if(action == GLFW_RELEASE) {
-        pressed_keys.erase(pressed_keys.find(key));
+        const auto found = pressed_keys.find(key);
+        if(found != pressed_keys.end()) {
+            pressed_keys.erase(pressed_keys.find(key));
+        }
     }
 }
 

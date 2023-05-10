@@ -9,9 +9,6 @@
 #include <iostream>
 #include <array>
 
-#warning "Delete execinfo in production"
-#include <execinfo.h>
-
 static std::unordered_map<GLenum, const std::string> error_names = {
     {GL_INVALID_ENUM, "invalid enum"},
     {GL_INVALID_VALUE, "invalid value"},
@@ -25,10 +22,6 @@ static std::unordered_map<GLenum, const std::string> error_names = {
 static void check_gl(const std::string context) {
     int status = glGetError();
     if(status != GL_NO_ERROR) {
-        std::array<void*, 10> array;
-        std::size_t size = backtrace(array.data(), 10);
-        std::cerr << "Backtrace:\n";
-        backtrace_symbols_fd(array.data(), size, 2);
         throw std::runtime_error(context + " Error: " + error_names[status]);
     }
 }
