@@ -9,7 +9,6 @@ Framebuffer::Framebuffer() {}
 Framebuffer::Framebuffer(const int width, const int height) {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    LOG(fbo);
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);

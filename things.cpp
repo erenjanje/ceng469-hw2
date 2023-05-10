@@ -150,8 +150,11 @@ struct CarObject {
     Object tires;
     
     void draw(ShaderProgram& shader, const std::vector<Light>& lights, const Camera& camera) {
+        shader.set("part", (GLuint)0);
         body.draw(shader, lights, camera);
+        shader.set("part", (GLuint)1);
         windows.draw(shader, lights, camera);
+        shader.set("part", (GLuint)2);
         tires.draw(shader, lights, camera);
     }
 };
@@ -294,7 +297,12 @@ void update() {
         glBindTexture(GL_TEXTURE_2D, framebuffers[i].get_texture());
         glBindSampler(i+1, framebuffers[i].get_sampler());
     }
-    objects.car.draw(programs.car, lights, camera);
+    programs.car.set("part", (GLuint)0);
+    objects.car.body.draw(programs.car, lights, camera);
+    programs.car.set("part", (GLuint)1);
+    objects.car.windows.draw(programs.car, lights, camera);
+    programs.car.set("part", (GLuint)2);
+    objects.car.tires.draw(programs.car, lights, camera);
 }
 
 static std::unordered_set<int> pressed_keys;

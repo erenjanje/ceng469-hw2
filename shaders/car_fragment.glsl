@@ -7,6 +7,8 @@ uniform sampler2D environment[6];
 uniform mat4 model;
 uniform vec3 eyepos;
 
+uniform int part;
+
 uniform int render_type;
 
 #define POSX 0
@@ -69,10 +71,11 @@ void main() {
         frag_color = texture(environment[selected_face], uv);
     }
     vec4 original_pos = inverse(model) * vec4(vertex_position, 1.0f);
-    if(original_pos.z < 0) {
-        frag_color += vec4(0.2f, 0.0f, 0.0f, 0.0f);
-    } else {
+    if(part == 0) {
         frag_color += vec4(0.0f, 0.2f, 0.0f, 0.0f);
+    } else if(part == 1) {
+        frag_color += vec4(0.0f, 0.0f, 0.2f, 0.0f);
+    } else {
+        frag_color = vec4(0.2f, 0.2f, 0.2f, 1.0f);
     }
-    // frag_color = vec4(vertex_normal, 1.0f);
 }
